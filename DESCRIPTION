@@ -1,10 +1,11 @@
 Package: nbastatstools
-Title: What the Package Does (one line, title case)
+Title: Tools to Interface With NBA Stats API
 Version: 0.0.0.9000
-Authors@R: person("First", "Last", email = "first.last@example.com", role = c("aut", "cre"))
-Description: What the package does (one paragraph).
+Authors@R: person("Jim", "Kloet", email = "jim.kloet@gmail.com", role = c("aut", "cre"))
+Description: This package contains tools for calling the NBA Stats API and interacting with data pulled from there.
 Depends: R (>= 3.5.1)
-License: What license is it under?
+License: LICENSE
 Encoding: UTF-8
 LazyData: true
 RoxygenNote: 6.1.1
+Imports: curl, dplyr, jsonlite, magrittr, readr
