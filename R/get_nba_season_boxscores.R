@@ -40,6 +40,7 @@ get_nba_season_boxscores <- function(season = NULL,
     # add a home_away field
     boxscores_df$home_away <- ifelse(grepl("@", boxscores_df$MATCHUP), "away", "home")
     # add in the arguments as columns
+    boxscores_df$season <- season
     boxscores_df$season_label <- season_label
     boxscores_df$season_type <- season_type
     # store data
