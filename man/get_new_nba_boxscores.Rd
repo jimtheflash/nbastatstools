@@ -5,7 +5,7 @@
 \title{Get new boxscores from nba stats api}
 \usage{
 get_new_nba_boxscores(db_connection = NULL, boxscores_table = NULL,
-  output_dir = NULL)
+  output_dir = NULL, return_df = TRUE)
 }
 \arguments{
 \item{db_connection}{RPostgreSQL connection object}

@@ -7,17 +7,22 @@
 #' @export
 get_new_nba_boxscores <- function(db_connection = NULL,
                                   boxscores_table = NULL,
-                                  output_dir = NULL) {
-  # get maximum season and game_date from current boxscores
-  lu <- DBI::dbGetQuery(db_connection, 
-                        paste0("select max(season) AS max_season, ",
-                               "max(game_date) AS max_game_date ",
+                                  output_dir = NULL,
+                                  return_df = TRUE) {
+  # get maximum season from current boxscores
+  season_lu <- DBI::dbGetQuery(db_connection, 
+                               paste0("select max(season) AS max_season ",
                                "from ", boxscores_table))
-  message("max_season = ", lu$max_season, "; max_game_date = ", lu$max_game_date)
+  max_season <- max(season_lu$max_season)
+  # get list of game_ids from current season
+  game_ids <- DBI::dbGetQuery(db_connection,
+                              paste0("select distinct game_id ",
+                                     "from ", boxscores_table, " ",
+                                     "where season = ", max_season, ";"))
   # get boxscores based on criteria in lu
-  new_boxscores <- nbastatstools::get_nba_season_boxscores(season = lu$max_season) %>%
+  new_boxscores <- nbastatstools::get_nba_season_boxscores(season = max_season) %>%
     nbastatstools::tidy_nba_boxscores() %>%
-    dplyr::filter(game_date > lu$max_game_date)
+    dplyr::filter(!game_id %in% unique(game_ids$game_id))
   # don't write a file if there's nothing to write
   if (nrow(new_boxscores) == 0) {
     stop("no new games, no file will be written")
@@ -26,4 +31,8 @@ get_new_nba_boxscores <- function(db_connection = NULL,
   output_path <- paste0(output_dir, "/boxscores_", Sys.Date(), ".csv")
   readr::write_csv(new_boxscores, path = output_path, na = "")
   message(nrow(new_boxscores), " observations saved to ", output_path)
+  # if specified, return a data.frame
+  if (return_df == TRUE) {
+    return(new_boxscores)
+  }
 }
