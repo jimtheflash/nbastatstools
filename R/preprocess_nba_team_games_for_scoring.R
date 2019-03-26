@@ -41,47 +41,51 @@ preprocess_nba_team_games_for_scoring <- function(enriched_team_games_for_scorin
                                       !names(enriched_team_games_for_scoring) %in% 
                                         c(names(nums_to_preproc),
                                           names(factors_to_dummy))],
-                                                 preprocessed_nums,
-                                                 dummyvared_factors)
+      preprocessed_nums,
+      dummyvared_factors)
     # filter based on game numbers
-    if (model_name == "first") {
-      output_df <- dplyr::filter(combined_preproc_dummies,
-                                 team_season_game_num == 1)
+    if (model_name == "one") {
+      output_df <- combined_preproc_dummies %>%
+        dplyr::filter(home_season_game_num == 1 | visitor_season_game_num == 1)
     }
     if (model_name == "two") {
-      output_df <- dplyr::filter(combined_preproc_dummies,
-                                 team_season_game_num > 1,
-                                 team_season_game_num <= 5)
+      output_df <- combined_preproc_dummies %>%
+        dplyr::filter(home_season_game_num > 1 & 
+                        visitor_season_game_num > 1 &
+                        (home_season_game_num <= 5 | visitor_season_game_num <= 5))
     }
     if (model_name == "five") {
-      output_df <- dplyr::filter(combined_preproc_dummies,
-                                 team_season_game_num > 5,
-                                 team_season_game_num <= 10)
+      output_df <- combined_preproc_dummies %>%
+        dplyr::filter(home_season_game_num > 5 & 
+                        visitor_season_game_num > 5 &
+                        (home_season_game_num <= 10 | visitor_season_game_num <= 10))
     }
     if (model_name == "ten") {
-      output_df <- dplyr::filter(combined_preproc_dummies,
-                                 team_season_game_num > 10,
-                                 team_season_game_num <= 20)
+      output_df <- combined_preproc_dummies %>%
+        dplyr::filter(home_season_game_num > 10 & 
+                        visitor_season_game_num > 10 &
+                        (home_season_game_num <= 20 | visitor_season_game_num <= 20))
     }
     if (model_name == "twenty") {
-      output_df <- dplyr::filter(combined_preproc_dummies,
-                                 team_season_game_num > 20,
-                                 team_season_game_num <= 40)
+      output_df <- combined_preproc_dummies %>%
+        dplyr::filter(home_season_game_num > 20 & 
+                        visitor_season_game_num > 20 &
+                        (home_season_game_num <= 40 | visitor_season_game_num <= 40))
     }
     if (model_name == "forty") {
-      output_df <- dplyr::filter(combined_preproc_dummies,
-                                 team_season_game_num > 40,
-                                 team_season_game_num <= 60)
-    }
-    if (model_name == "sixty") {
-      output_df <- dplyr::filter(combined_preproc_dummies,
-                                 team_season_game_num > 60,
-                                 team_season_game_num <= 82)
+      output_df <- combined_preproc_dummies %>%
+        dplyr::filter(home_season_game_num > 40 &
+                        visitor_season_game_num > 40 &
+                        home_season_game_num <= 82 &
+                        visitor_season_game_num <= 82)
     }
     if (model_name == "playoffs") {
-      output_df <- dplyr::filter(combined_preproc_dummies,
-                                 team_season_game_num > 82)
+      output_df <- combined_preproc_dummies %>%
+        dplyr::filter(home_season_game_num > 82 &
+                        visitor_season_game_num > 82)
     }
+    # alphabetize columns just in case
+    output_df <- output_df[, sort(names(output_df))]
     # store the data
     output_list[[model_name]] <- output_df
   }

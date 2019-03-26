@@ -29,22 +29,26 @@ build_nba_team_game_models <- function(modeling_data = NULL,
       outcome <- modeling_targets[[target]]
       # specify trainControl to be used in modeling
       if (!is.numeric(outcome)) {
-        train_control <- caret::trainControl(method = "cv", number = 5, # TODO: MAKE ARG IN CONFIG
+        outcome <- as.factor(outcome)
+        train_control <- caret::trainControl(method = "cv",
                                              search = "grid",
                                              savePredictions = "final",
+                                             returnData = FALSE,
                                              returnResamp = "final",
                                              classProbs = TRUE,
                                              allowParallel = TRUE) 
       } else {
-        train_control <- caret::trainControl(method = "cv", number = 5, # TODO: MAKE ARG IN CONFIG
+        train_control <- caret::trainControl(method = "cv",
                                              search = "grid",
                                              savePredictions = "final",
+                                             returnData = FALSE,
                                              returnResamp = "final",
                                              allowParallel = TRUE)
       }
       # split based on outcome for assessment
-      dp <- caret::createDataPartition(outcome, p = .75, list = FALSE)
+      dp <- caret::createDataPartition(outcome, p = .85, list = FALSE)
       training_input <- modeling_input[dp, ]
+      training_input$game_id <- NULL
       training_outcome <- outcome[dp]
       
       # build models
@@ -54,19 +58,13 @@ build_nba_team_game_models <- function(modeling_data = NULL,
         training_input,
         training_outcome,
         trControl = train_control,
-        methodList = c("gbm",
-                       "glmnet"),
-        tuneList = list(
-          rf = caretEnsemble::caretModelSpec(method = "rf", 
-                                             tuneGrid = data.frame(.mtry = 10)),
-          earth = caretEnsemble::caretModelSpec(method = "earth",
-                                                tuneGrid = data.frame(.nprune = 10,
-                                                                      .degree = 2))
-        ),
+        methodList = c("glmnet",
+                       "ranger"),
         continue_on_fail = FALSE)
       ensemble <- caretEnsemble::caretEnsemble(model_list)
       # create evaluation data
       test_input <- modeling_input[-dp, ]
+      test_input$game_id <- NULL
       test_outcome <- outcome[-dp]
       # generate scores based on outcome type
       if (!is.numeric(outcome)) {
@@ -85,6 +83,7 @@ build_nba_team_game_models <- function(modeling_data = NULL,
       # un-register parallel
       foreach::registerDoSEQ()                        
       parallel::stopCluster(cl)
+      gc()
     }
     models[[model]] <- target_list
     # save the models to the output_path if it isn't NULL
@@ -94,6 +93,7 @@ build_nba_team_game_models <- function(modeling_data = NULL,
                          ".rds")
       saveRDS(target_list, file = rds_name)
     }
+    gc()
   }
   # unload caret so it doesn't cause other problems downstream
   detach("package:caret", unload = TRUE)

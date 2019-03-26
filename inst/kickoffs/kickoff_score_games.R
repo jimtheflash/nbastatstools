@@ -39,11 +39,17 @@ preprocessed_team_games_for_scoring <-
       "C:/Users/Jim/Documents/nba/objects"
     )
 # generate scores ---------------------------------------------------------
-message(Sys.time(), " generating scores...")
+message(Sys.time(), " generating scores for team-games...")
 scored_team_games <- nbastatstools::score_nba_team_games(
-  model_inputs = preprocessed_team_games_for_scoring,
+  preprocessed_team_games_for_scoring = preprocessed_team_games_for_scoring,
   model_path = "C:/Users/Jim/Documents/nba/objects"
-  )
-
+  ) %>%
+  nbastatstools::tidy_nba_team_game_scores(
+    scored_team_games = .,
+    game_slate = game_slate,
+    boxscores_for_scoring = boxscores_for_scoring)
+readr::write_csv(scored_team_games, paste0("nba_scored_team_games_", 
+                                           gsub("\\.", "_", as.numeric(Sys.time())),
+                                           ".csv"))
 t2 <- Sys.time()
 t2 - t1

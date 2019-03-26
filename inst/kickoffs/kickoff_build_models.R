@@ -23,19 +23,21 @@ enriched_team_games <- nbastatstools::enrich_nba_team_games(team_games)
 preprocessed_team_games <- 
   nbastatstools::preprocess_nba_team_games(
     enriched_team_games,
-    models = c("sixty", "playoffs"),
-    outcomes = c("pts_team", "pts_opp", "wl"),
+    models = c("forty"),
+    outcomes = c("home_win", "home_margin", "total_pts"),
     objects_output_path = "C:/Users/Jim/Documents/nba/objects")
 ## player-game data
 # message(Sys.time(), " preprocessing player-game data...")
 # enriched_player_games <- nbastatstools::enriche_nba_player_games(boxscores, team_games)
 # build models ------------------------------------------------------------
 ## team-games
+message(Sys.time(), " building team-games models...")
 team_game_models <- 
   nbastatstools::build_nba_team_game_models(
     modeling_data = preprocessed_team_games$modeling_data,
     output_path = "C:/Users/Jim/Documents/nba/objects")
-## player-games (forthcoming)
+## games (forthcoming; requires team-games scores as inputs)
+## player-games (forthcoming; requires team-games or games scores as inputs)
 # evaluate models ---------------------------------------------------------
 ## (forthcoming)
 # db disconnect -----------------------------------------------------------

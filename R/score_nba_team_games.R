@@ -12,6 +12,7 @@ score_nba_team_games <- function(preprocessed_team_games_for_scoring = NULL,
   model_names <- names(preprocessed_team_games_for_scoring)
   output_list <- list()
   for (model_name in model_names) {
+    message("scoring team-games with model ", model_name, "...")
     # subset the input data
     model_input <- preprocessed_team_games_for_scoring[[model_name]]
     # move on if no data to score
@@ -28,6 +29,7 @@ score_nba_team_games <- function(preprocessed_team_games_for_scoring = NULL,
     target_list <- names(newest_models)
     target_model_output <- list()
     for (target in target_list) {
+      message("for target ", target, "...")
       target_ensemble <- newest_models[[target]]$ensemble
       model_type <- target_ensemble$ens_model$modelType
       if (model_type == "Regression") {
@@ -39,12 +41,9 @@ score_nba_team_games <- function(preprocessed_team_games_for_scoring = NULL,
       }
       # label the preds with identifiers
       preds_df <- model_input %>%
-        dplyr::select(team_id, team_abbreviation) %>%
+        dplyr::select(game_id) %>%
         dplyr::mutate(target = target,
-                      preds = preds,
-                      opp_team_id = model_input$opposing_team_team_id,
-                      opp_team_abbreviation = 
-                        model_input$opposing_team_team_abbreviation)
+                      preds = as.numeric(preds))
       target_model_output[[target]] <- preds_df
     }
     # add the target outputs to the final output list

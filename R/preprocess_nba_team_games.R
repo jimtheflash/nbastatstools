@@ -14,8 +14,8 @@ preprocess_nba_team_games <- function(enriched_team_games = NULL,
   # global filters
   raw <- enriched_team_games %>%
     dplyr::filter(season > min(season)) %>%
-    dplyr::select(-dplyr::matches("cumsum"),
-                  -dplyr::matches("cummean"),
+    dplyr::select(-dplyr::ends_with("cummean"),
+                  -dplyr::ends_with("cumsum"),
                   -dplyr::ends_with("five"),
                   -dplyr::ends_with("ten"),
                   -dplyr::ends_with("twenty"))
@@ -25,106 +25,103 @@ preprocess_nba_team_games <- function(enriched_team_games = NULL,
   modeling_data <- list()
   for (model in models) {
     message("filtering data for model ", model, "...")
-    if (model == "first") {
+    if (model == "one") {
       # select inputs and outcomes
       filtered <- raw %>%
-        dplyr::filter(team_season_game_num == 1) %>%
-        dplyr::select(dplyr::matches("prev_season"),
-                      dow, home_away,
+        dplyr::filter(home_season_game_num == 1 | visitor_season_game_num == 1) %>%
+        dplyr::select(game_id,
+                      dplyr::matches("prev_season"),
                       !!outcomes) %>%
         na.omit()
     }
     if (model == "two") {
       # select inputs and outcomes
       filtered <- raw %>%
-        dplyr::filter(team_season_game_num > 1) %>%
-        dplyr::filter(team_season_game_num <= 5) %>%
-        dplyr::select(dplyr::matches("prev_season"),
+        dplyr::filter(home_season_game_num > 1 & 
+                        visitor_season_game_num > 1 &
+                        (home_season_game_num <= 5 | visitor_season_game_num <= 5)) %>%
+        dplyr::select(game_id,
+                      dplyr::matches("prev_season"),
                       dplyr::matches("prev_game"),
                       -dplyr::matches("roll"),
-                      dow, home_away,
                       !!outcomes) %>%
         na.omit()
     }
     if (model == "five") {
       # select inputs and outcomes
       filtered <- raw %>%
-        dplyr::filter(team_season_game_num > 5) %>%
-        dplyr::filter(team_season_game_num <= 10) %>%
-        dplyr::select(dplyr::matches("prev_season"),
+        dplyr::filter(home_season_game_num > 5 &
+                        visitor_season_game_num > 5 &
+                        (home_season_game_num <= 10 | visitor_season_game_num <= 10)) %>%
+        dplyr::select(game_id,
+                      dplyr::matches("prev_season"),
                       dplyr::matches("prev_game"),
                       dplyr::matches("backtoback"),
                       dplyr::matches("roll"),
                       -dplyr::matches("ten"),
                       -dplyr::matches("twenty"),
-                      dow, home_away,
                       !!outcomes) %>%
         na.omit()
     }
     if (model == "ten") {
       filtered <- raw %>%
-        dplyr::filter(team_season_game_num > 10) %>%
-        dplyr::filter(team_season_game_num <= 20) %>%
-        dplyr::select(dplyr::matches("prev_season"),
+        dplyr::filter(home_season_game_num > 10 &
+                        visitor_season_game_num > 10 &
+                        (home_season_game_num <= 20 | visitor_season_game_num <= 20)) %>%
+        dplyr::select(game_id,
+                      dplyr::matches("prev_season"),
                       dplyr::matches("prev_game"),
                       dplyr::matches("backtoback"),
                       dplyr::matches("roll"),
                       -dplyr::matches("twenty"),
-                      dow, home_away,
                       !!outcomes) %>%
         na.omit()
     }
     if (model == "twenty") {
       filtered <- raw %>%
-        dplyr::filter(team_season_game_num > 20) %>%
-        dplyr::filter(team_season_game_num <= 40) %>%
-        dplyr::select(dplyr::matches("prev_season"),
+        dplyr::filter(home_season_game_num > 20 &
+                        visitor_season_game_num > 20 &
+                        (home_season_game_num <= 40 | visitor_season_game_num <= 40)) %>%
+        dplyr::select(game_id,
+                      dplyr::matches("prev_season"),
                       dplyr::matches("prev_game"),
                       dplyr::matches("backtoback"),
                       dplyr::matches("roll"),
-                      dow, month, home_away,
                       !!outcomes) %>%
         na.omit()
     }
     if (model == "forty") {
       filtered <- raw %>%
-        dplyr::filter(team_season_game_num > 40) %>%
-        dplyr::filter(team_season_game_num <= 60) %>%
-        dplyr::select(dplyr::matches("prev_season"),
+        dplyr::filter(home_season_game_num > 40 &
+                        visitor_season_game_num > 40 &
+                        home_season_game_num <= 82 &
+                        visitor_season_game_num <= 82) %>%
+        dplyr::select(game_id,
+                      dplyr::matches("prev_season"),
                       dplyr::matches("prev_game"),
                       dplyr::matches("backtoback"),
                       dplyr::matches("roll"),
-                      dow, month, home_away,
-                      !!outcomes) %>%
-        na.omit()
-    }
-    if (model == "sixty") {
-      filtered <- raw %>%
-        dplyr::filter(team_season_game_num > 60) %>%
-        dplyr::filter(team_season_game_num <= 82) %>%
-        dplyr::select(dplyr::matches("prev_season"),
-                      dplyr::matches("prev_game"),
-                      dplyr::matches("backtoback"),
-                      dplyr::matches("roll"),
-                      dow, month, home_away,
                       !!outcomes) %>%
         na.omit()
     }
     if (model == "playoffs") {
       filtered <- raw %>%
-        dplyr::filter(team_season_game_num > 82) %>%
-        dplyr::select(dplyr::matches("prev_season"),
+        dplyr::filter(home_season_game_num > 82 &
+                        visitor_season_game_num > 82) %>%
+        dplyr::select(game_id,
+                      dplyr::matches("prev_season"),
                       dplyr::matches("prev_game"),
                       dplyr::matches("backtoback"),
                       dplyr::matches("roll"),
-                      dow, home_away,
                       !!outcomes) %>%
         na.omit()
     }
     # split into inputs and outcomes for preprocessing algorithms
     message("splitting...")
+    identifiers <- filtered$game_id
     inputs <- filtered %>%
-      dplyr::select(-!!outcomes)
+      dplyr::select(-!!outcomes) %>%
+      dplyr::select(-game_id)
     targets <- filtered %>%
       dplyr::select(!!outcomes)
     
@@ -150,7 +147,11 @@ preprocess_nba_team_games <- function(enriched_team_games = NULL,
     # tidy names by replacing periods with underscores
     names(dummyvars_data) <- gsub("\\.", "_", names(dummyvars_data))
     # stitch together data elements
-    output_data <- dplyr::bind_cols(num_preproc_data, dummyvars_data)
+    output_data <- dplyr::bind_cols(game_id = identifiers, 
+                                    num_preproc_data, 
+                                    dummyvars_data)
+    # alphabetize columns in case we need to re-order later
+    output_data <- output_data[, sort(names(output_data))]
     # add to output list
     modeling_objects[[model]] <- list(preproc = num_preproc_obj,
                                       dummy = dummyvars_obj)
